@@ -2,7 +2,7 @@ import multiprocessing
 import os
 from enum import Enum
 import random
-from typing import List, Optional
+from typing import List, Optional, Callable, Any
 
 import _pygemma
 
@@ -66,6 +66,7 @@ class Gemma:
         self,
         prompt: str,
         *,
+        callback: Callable[[str], Any],
         max_tokens: int = 2048,
         max_generated_tokens: int = 1024,
         temperature: float = 1.0,
@@ -78,6 +79,7 @@ class Gemma:
 
         return self.model.generate(
             prompt,
+            callback,
             max_tokens,
             max_generated_tokens,
             temperature,

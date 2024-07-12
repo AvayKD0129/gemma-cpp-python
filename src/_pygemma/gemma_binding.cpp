@@ -2,6 +2,7 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <pybind11/functional.h>
 
 #include <iostream>
 
@@ -70,6 +71,7 @@ std::string GemmaModel::detokenize(const std::vector<int> &tokens) {
 }
 
 std::string GemmaModel::generate(const std::string &prompt_string,
+                                 const std::function<void(const std::string&)>& callback,
                                  size_t max_tokens, size_t max_generated_tokens,
                                  float temperature, uint_fast32_t seed,
                                  int verbosity) {
@@ -95,7 +97,7 @@ std::string GemmaModel::generate(const std::string &prompt_string,
   // This callback function gets invoked everytime a token is generated
   const gcpp::StreamFunc stream_token = [this, &pos, &gen, &ntokens,
                                          tokenizer = model->Tokenizer(),
-                                         &completion](int token, float) {
+                                         &completion, callback](int token, float) {
     ++pos;
     if (pos < ntokens) {
       // print feedback
@@ -104,6 +106,11 @@ std::string GemmaModel::generate(const std::string &prompt_string,
       HWY_ASSERT(tokenizer->Decode(std::vector<int>{token}, &token_text).ok());
       completion += token_text;
     }
+
+    if (token != this->eos_token) {
+        callback(completion);
+    }
+
     return true;
   };
 
@@ -136,6 +143,7 @@ PYBIND11_MODULE(_pygemma, m) {
       .def("detokenize", &GemmaModel::detokenize, py::arg("tokens"),
            "Detokenize the input tokens and return the detokenized text")
       .def("generate", &GemmaModel::generate, py::arg("prompt"),
+           py::arg("callback"),
            py::arg("max_tokens"), py::arg("max_generated_tokens"),
            py::arg("temperature"), py::arg("seed"), py::arg("verbosity"),
            "Generate text based on the input prompt");

@@ -29,7 +29,9 @@ class GemmaModel {
 
   std::string detokenize(const std::vector<int> &tokens);
 
-  std::string generate(const std::string &prompt, size_t max_tokens,
-                       size_t max_generated_tokens, float temperature,
-                       uint_fast32_t seed, int verbosity);
+  std::string generate(const std::string &prompt,
+                       const std::function<void(const std::string&)>& callback,
+                       size_t max_tokens, size_t max_generated_tokens,
+                       float temperature, uint_fast32_t seed,
+                       int verbosity);
 };
